@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conjugation Trainer — Mi Camino Español</title>
+<style>
+  :root {
+    --bg: #16121c;
+    --bg-soft: #1f1a29;
+    --card: #251f31;
+    --card-hover: #2d2540;
+    --border: #3a3050;
+    --text: #f2edf7;
+    --text-dim: #a99fc0;
+    --accent: #ff6b4a;
+    --accent-2: #ffc247;
+    --accent-3: #7c6cff;
+    --green: #4ade80;
+    --red: #f87171;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255, 107, 74, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(124, 108, 255, 0.10), transparent);
+    background-attachment: fixed;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 0;
+    animation: fadeDown 0.5s ease both;
+  }
+
+  .back {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+  .back:hover { color: var(--accent-2); }
+
+  .totals { font-size: 0.85rem; color: var(--text-dim); }
+  .totals b { color: var(--accent-2); }
+
+  h1 {
+    text-align: center;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 800;
+    margin: 8px 0 6px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: fadeUp 0.5s ease both;
+  }
+  .subtitle { text-align: center; color: var(--text-dim); font-size: 0.95rem; margin-bottom: 28px; animation: fadeUp 0.5s 0.05s ease both; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 18px;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+
+  .panel h2 { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 14px; }
+
+  /* ---------- Settings ---------- */
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text-dim);
+    border-radius: 999px;
+    padding: 7px 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--accent-2); }
+  .chip.on { background: rgba(255, 107, 74, 0.16); border-color: var(--accent); color: var(--text); font-weight: 600; }
+
+  .opt-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .opt-label { font-size: 0.8rem; color: var(--text-dim); margin-right: 4px; min-width: 64px; }
+
+  /* ---------- Drill card ---------- */
+  .drill { text-align: center; padding: 34px 22px; }
+
+  .tense-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-3);
+    border: 1px solid rgba(124, 108, 255, 0.4);
+    background: rgba(124, 108, 255, 0.1);
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+
+  .verb { font-size: 2.4rem; font-weight: 800; color: var(--accent-2); }
+  .verb-en { color: var(--text-dim); margin-top: 4px; font-size: 1rem; }
+  .pronoun { font-size: 1.5rem; margin-top: 18px; font-weight: 600; }
+  .pronoun span { color: var(--accent); }
+
+  .answer-row { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  input[type="text"] {
+    background: var(--bg-soft);
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-size: 1.2rem;
+    padding: 12px 18px;
+    border-radius: 12px;
+    width: min(300px, 70vw);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+  input[type="text"]:focus { border-color: var(--accent-3); }
+  input.good { border-color: var(--green); animation: pop 0.3s ease; }
+  input.bad  { border-color: var(--red); animation: shake 0.4s ease; }
+
+  .btn {
+    background: linear-gradient(120deg, var(--accent), #ff8a3d);
+    color: #fff;
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 12px 26px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255, 107, 74, 0.3); }
+  .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-weight: 500; }
+  .btn.ghost:hover { border-color: var(--accent-2); color: var(--accent-2); box-shadow: none; }
+
+  .accents { margin-top: 14px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .accents button {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--accent-2);
+    font-size: 1.05rem;
+    width: 40px; height: 38px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .accents button:hover { border-color: var(--accent-2); transform: translateY(-2px); }
+
+  .feedback { margin-top: 20px; min-height: 76px; font-size: 1.05rem; }
+  .feedback .ok  { color: var(--green); font-weight: 700; font-size: 1.2rem; }
+  .feedback .no  { color: var(--red); font-weight: 700; font-size: 1.2rem; }
+  .feedback .answer { font-size: 1.4rem; font-weight: 800; color: var(--accent-2); margin-top: 4px; }
+  .feedback .aloud {
+    margin-top: 10px;
+    display: inline-block;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    color: var(--green);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 0.9rem;
+    animation: fadeUp 0.35s ease both;
+  }
+  .feedback .almost { color: var(--accent-2); font-size: 0.9rem; margin-top: 6px; }
+
+  /* ---------- Session bar ---------- */
+  .session {
+    display: flex;
+    justify-content: center;
+    gap: 26px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+  .session b { color: var(--text); font-size: 1.05rem; }
+  .session .fire b { color: var(--accent); }
+
+  /* ---------- Worst verbs ---------- */
+  .worst-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .worst-item {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  .worst-item b { color: var(--red); }
+  .worst-item span { color: var(--text-dim); font-size: 0.8rem; }
+  .worst-empty { color: var(--text-dim); font-size: 0.9rem; }
+
+  /* ---------- Tips + reference ---------- */
+  .tip {
+    background: rgba(255, 194, 71, 0.07);
+    border: 1px solid rgba(255, 194, 71, 0.25);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  .tip b { color: var(--accent-2); }
+
+  details {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  summary {
+    padding: 15px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    list-style: none;
+    transition: color 0.2s;
+  }
+  summary:hover { color: var(--accent-2); }
+  summary::before { content: "▸ "; color: var(--accent); }
+  details[open] summary::before { content: "▾ "; }
+  details .body { padding: 0 20px 18px; font-size: 0.88rem; color: var(--text-dim); line-height: 1.7; overflow-x: auto; }
+  details table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+  details th, details td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; font-size: 0.85rem; }
+  details th { color: var(--accent-2); background: var(--bg-soft); }
+  details td b { color: var(--text); }
+
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+  @keyframes pop   { 50% { transform: scale(1.04); } }
+  @keyframes shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <a class="back" href="index.html">← Inicio</a>
+    <div class="totals">All-time: <b id="all-correct">0</b> / <b id="all-total">0</b> drilled</div>
+  </header>
+
+  <h1>🔄 Conjugation Trainer</h1>
+  <p class="subtitle">Random verb → random tense. Type the form, then <b>say the whole phrase out loud</b> — that's what sticks.</p>
+
+  <!-- Settings -->
+  <div class="panel">
+    <h2>⚙️ Drill setup</h2>
+    <div class="opt-row" style="margin-bottom:12px;">
+      <span class="opt-label">Tenses</span>
+      <div class="opts" id="tense-opts"></div>
+    </div>
+    <div class="opt-row" style="margin-bottom:12px;">
+      <span class="opt-label">Verbs</span>
+      <div class="opts" id="pool-opts">
+        <div class="chip on" data-pool="regular">Regulars only</div>
+        <div class="chip" data-pool="mixed">Regulars + irregulars</div>
+        <div class="chip" data-pool="irregular">Irregulars only</div>
+        <div class="chip" data-pool="worst">🔥 My worst verbs</div>
+      </div>
+    </div>
+    <div class="opt-row">
+      <span class="opt-label">Extras</span>
+      <div class="opts">
+        <div class="chip" id="vosotros-chip">Include vosotros</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drill -->
+  <div class="panel drill">
+    <div class="tense-tag" id="tense-tag">Presente</div>
+    <div class="verb" id="verb">hablar</div>
+    <div class="verb-en" id="verb-en">to speak</div>
+    <div class="pronoun"><span id="pronoun">yo</span> ______</div>
+
+    <div class="answer-row">
+      <input type="text" id="answer" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type the form…">
+      <button class="btn" id="check-btn" onclick="check()">Check</button>
+      <button class="btn ghost" onclick="skip()">Skip →</button>
+    </div>
+
+    <div class="accents">
+      <button onclick="ins('á')">á</button>
+      <button onclick="ins('é')">é</button>
+      <button onclick="ins('í')">í</button>
+      <button onclick="ins('ó')">ó</button>
+      <button onclick="ins('ú')">ú</button>
+      <button onclick="ins('ñ')">ñ</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="session">
+      <div>Session: <b id="s-correct">0</b> / <b id="s-total">0</b></div>
+      <div class="fire">Streak: <b id="s-streak">0</b> 🔥</div>
+      <div>Best: <b id="s-best">0</b></div>
+    </div>
+  </div>
+
+  <!-- Worst verbs -->
+  <div class="panel">
+    <h2>🔥 Mis peores verbos <span style="text-transform:none;letter-spacing:0;">(auto-tracked — flashcard only these, per the Reddit rule)</span></h2>
+    <div class="worst-list" id="worst-list">
+      <div class="worst-empty">No trouble verbs yet — miss a verb a couple of times and it shows up here.</div>
+    </div>
+  </div>
+
+  <!-- Subjunctive tip (shown only when subjunctive is on) -->
+  <div class="tip" id="subj-tip" style="display:none;">
+    <b>Subjunctive tricks:</b> <b>ESCAPA</b> = the conjunctions that trigger it — <b>E</b>n caso de que, <b>S</b>in que, <b>C</b>on tal de que, <b>A</b>ntes de que, <b>P</b>ara que, <b>A</b> menos que.
+    And the coder's rule: <i>a subjunctive clause is an unresolved promise — if you're still awaiting the outcome, use the subjunctive.</i>
+  </div>
+
+  <div class="tip">
+    💡 <b>The golden rule:</b> never memorize tables in isolation. After every answer, say the full phrase out loud — <i>"yo hablo", "tú comes"</i> — the sound and cadence of whole phrases is what sticks. Regular patterns first; irregulars unlock a few at a time.
+  </div>
+
+  <!-- Reference -->
+  <details>
+    <summary>📖 Endings reference — Presente</summary>
+    <div class="body">
+      <table>
+        <tr><th></th><th>-ar (hablar)</th><th>-er (comer)</th><th>-ir (vivir)</th></tr>
+        <tr><td>yo</td><td><b>hablo</b></td><td><b>como</b></td><td><b>vivo</b></td></tr>
+        <tr><td>tú</td><td><b>hablas</b></td><td><b>comes</b></td><td><b>vives</b></td></tr>
+        <tr><td>él/ella/usted</td><td><b>habla</b></td><td><b>come</b></td><td><b>vive</b></td></tr>
+        <tr><td>nosotros</td><td><b>hablamos</b></td><td><b>comemos</b></td><td><b>vivimos</b></td></tr>
+        <tr><td>vosotros</td><td><b>habláis</b></td><td><b>coméis</b></td><td><b>vivís</b></td></tr>
+        <tr><td>ellos/ustedes</td><td><b>hablan</b></td><td><b>comen</b></td><td><b>viven</b></td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>📖 Endings reference — Pretérito & Imperfecto</summary>
+    <div class="body">
+      <b style="color:var(--accent-2)">Pretérito</b> (completed past)
+      <table>
+        <tr><th></th><th>-ar</th><th>-er / -ir</th></tr>
+        <tr><td>yo</td><td><b>-é</b> (hablé)</td><td><b>-í</b> (comí)</td></tr>
+        <tr><td>tú</td><td><b>-aste</b></td><td><b>-iste</b></td></tr>
+        <tr><td>él/ella</td><td><b>-ó</b></td><td><b>-ió</b></td></tr>
+        <tr><td>nosotros</td><td><b>-amos</b></td><td><b>-imos</b></td></tr>
+        <tr><td>vosotros</td><td><b>-asteis</b></td><td><b>-isteis</b></td></tr>
+        <tr><td>ellos</td><td><b>-aron</b></td><td><b>-ieron</b></td></tr>
+      </table>
+      <br>
+      <b style="color:var(--accent-2)">Imperfecto</b> (ongoing past — only 3 irregulars in all of Spanish: ser, ir, ver)
+      <table>
+        <tr><th></th><th>-ar</th><th>-er / -ir</th></tr>
+        <tr><td>yo</td><td><b>-aba</b> (hablaba)</td><td><b>-ía</b> (comía)</td></tr>
+        <tr><td>tú</td><td><b>-abas</b></td><td><b>-ías</b></td></tr>
+        <tr><td>él/ella</td><td><b>-aba</b></td><td><b>-ía</b></td></tr>
+        <tr><td>nosotros</td><td><b>-ábamos</b></td><td><b>-íamos</b></td></tr>
+        <tr><td>vosotros</td><td><b>-abais</b></td><td><b>-íais</b></td></tr>
+        <tr><td>ellos</td><td><b>-aban</b></td><td><b>-ían</b></td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>📖 Endings reference — Futuro, Condicional & Subjuntivo</summary>
+    <div class="body">
+      <b style="color:var(--accent-2)">Futuro</b> — whole infinitive + <b>é, ás, á, emos, éis, án</b> (hablaré, comerás…).<br>
+      <b style="color:var(--accent-2)">Condicional</b> — whole infinitive + <b>ía, ías, ía, íamos, íais, ían</b> (hablaría…).<br>
+      Both share the same 12 irregular stems: tendr-, har-, podr-, dir-, querr-, vendr-, pondr-, sabr-…<br><br>
+      <b style="color:var(--accent-2)">Subjuntivo presente</b> — swap the vowel: -ar verbs take <b>e</b>-endings (hable, hables…), -er/-ir verbs take <b>a</b>-endings (coma, comas…). Most irregulars build from the yo-form: tengo → tenga, digo → diga.
+    </div>
+  </details>
+
+</div>
+
+<script>
+/* =============== VERB DATA =============== */
+// Regular verbs (no stem or spelling changes in the drilled tenses)
+const REGULARS = [
+  ["hablar","to speak"],["caminar","to walk"],["estudiar","to study"],["trabajar","to work"],
+  ["cocinar","to cook"],["bailar","to dance"],["cantar","to sing"],["escuchar","to listen"],
+  ["mirar","to look at"],["comprar","to buy"],["viajar","to travel"],["ayudar","to help"],
+  ["esperar","to wait / hope"],["necesitar","to need"],["preguntar","to ask"],["visitar","to visit"],
+  ["comer","to eat"],["beber","to drink"],["correr","to run"],["aprender","to learn"],
+  ["vender","to sell"],["comprender","to understand"],["responder","to answer"],
+  ["vivir","to live"],["escribir","to write"],["abrir","to open"],["recibir","to receive"],
+  ["subir","to go up"],["compartir","to share"]
+];
+
+// Irregulars: overrides per tense; missing tenses fall back to regular rules.
+// futStem covers both future and conditional.
+const IRREGULARS = [
+  { inf:"ser", en:"to be (characteristic)",
+    present:["soy","eres","es","somos","sois","son"],
+    preterite:["fui","fuiste","fue","fuimos","fuisteis","fueron"],
+    imperfect:["era","eras","era","éramos","erais","eran"],
+    subjunctive:["sea","seas","sea","seamos","seáis","sean"] },
+  { inf:"estar", en:"to be (state/location)",
+    present:["estoy","estás","está","estamos","estáis","están"],
+    preterite:["estuve","estuviste","estuvo","estuvimos","estuvisteis","estuvieron"],
+    subjunctive:["esté","estés","esté","estemos","estéis","estén"] },
+  { inf:"ir", en:"to go",
+    present:["voy","vas","va","vamos","vais","van"],
+    preterite:["fui","fuiste","fue","fuimos","fuisteis","fueron"],
+    imperfect:["iba","ibas","iba","íbamos","ibais","iban"],
+    subjunctive:["vaya","vayas","vaya","vayamos","vayáis","vayan"] },
+  { inf:"tener", en:"to have", futStem:"tendr",
+    present:["tengo","tienes","tiene","tenemos","tenéis","tienen"],
+    preterite:["tuve","tuviste","tuvo","tuvimos","tuvisteis","tuvieron"],
+    subjunctive:["tenga","tengas","tenga","tengamos","tengáis","tengan"] },
+  { inf:"hacer", en:"to do / make", futStem:"har",
+    present:["hago","haces","hace","hacemos","hacéis","hacen"],
+    preterite:["hice","hiciste","hizo","hicimos","hicisteis","hicieron"],
+    subjunctive:["haga","hagas","haga","hagamos","hagáis","hagan"] },
+  { inf:"poder", en:"to be able to", futStem:"podr",
+    present:["puedo","puedes","puede","podemos","podéis","pueden"],
+    preterite:["pude","pudiste","pudo","pudimos","pudisteis","pudieron"],
+    subjunctive:["pueda","puedas","pueda","podamos","podáis","puedan"] },
+  { inf:"decir", en:"to say / tell", futStem:"dir",
+    present:["digo","dices","dice","decimos","decís","dicen"],
+    preterite:["dije","dijiste","dijo","dijimos","dijisteis","dijeron"],
+    subjunctive:["diga","digas","diga","digamos","digáis","digan"] },
+  { inf:"querer", en:"to want / love", futStem:"querr",
+    present:["quiero","quieres","quiere","queremos","queréis","quieren"],
+    preterite:["quise","quisiste","quiso","quisimos","quisisteis","quisieron"],
+    subjunctive:["quiera","quieras","quiera","queramos","queráis","quieran"] },
+  { inf:"venir", en:"to come", futStem:"vendr",
+    present:["vengo","vienes","viene","venimos","venís","vienen"],
+    preterite:["vine","viniste","vino","vinimos","vinisteis","vinieron"],
+    subjunctive:["venga","vengas","venga","vengamos","vengáis","vengan"] },
+  { inf:"poner", en:"to put", futStem:"pondr",
+    present:["pongo","pones","pone","ponemos","ponéis","ponen"],
+    preterite:["puse","pusiste","puso","pusimos","pusisteis","pusieron"],
+    subjunctive:["ponga","pongas","ponga","pongamos","pongáis","pongan"] },
+  { inf:"saber", en:"to know (facts)", futStem:"sabr",
+    present:["sé","sabes","sabe","sabemos","sabéis","saben"],
+    preterite:["supe","supiste","supo","supimos","supisteis","supieron"],
+    subjunctive:["sepa","sepas","sepa","sepamos","sepáis","sepan"] },
+  { inf:"dar", en:"to give",
+    present:["doy","das","da","damos","dais","dan"],
+    preterite:["di","diste","dio","dimos","disteis","dieron"],
+    subjunctive:["dé","des","dé","demos","deis","den"] },
+  { inf:"ver", en:"to see",
+    present:["veo","ves","ve","vemos","veis","ven"],
+    preterite:["vi","viste","vio","vimos","visteis","vieron"],
+    imperfect:["veía","veías","veía","veíamos","veíais","veían"],
+    subjunctive:["vea","veas","vea","veamos","veáis","vean"] },
+];
+
+/* =============== CONJUGATION ENGINE =============== */
+const ENDINGS = {
+  present:     { ar:["o","as","a","amos","áis","an"], er:["o","es","e","emos","éis","en"], ir:["o","es","e","imos","ís","en"] },
+  preterite:   { ar:["é","aste","ó","amos","asteis","aron"], er:["í","iste","ió","imos","isteis","ieron"], ir:["í","iste","ió","imos","isteis","ieron"] },
+  imperfect:   { ar:["aba","abas","aba","ábamos","abais","aban"], er:["ía","ías","ía","íamos","íais","ían"], ir:["ía","ías","ía","íamos","íais","ían"] },
+  subjunctive: { ar:["e","es","e","emos","éis","en"], er:["a","as","a","amos","áis","an"], ir:["a","as","a","amos","áis","an"] },
+  future:      ["é","ás","á","emos","éis","án"],
+  conditional: ["ía","ías","ía","íamos","íais","ían"],
+};
+
+const TENSES = [
+  { id:"present",     label:"Presente" },
+  { id:"preterite",   label:"Pretérito" },
+  { id:"imperfect",   label:"Imperfecto" },
+  { id:"future",      label:"Futuro" },
+  { id:"conditional", label:"Condicional" },
+  { id:"subjunctive", label:"Subjuntivo" },
+];
+
+const PRONOUNS = ["yo","tú","él/ella","nosotros","vosotros","ellos/ellas"];
+
+function conjugate(verb, tense, i) {
+  if (verb[tense]) return verb[tense][i];                     // irregular override
+  if (tense === "future")      return (verb.futStem || verb.inf) + ENDINGS.future[i];
+  if (tense === "conditional") return (verb.futStem || verb.inf) + ENDINGS.conditional[i];
+  const type = verb.inf.slice(-2);
+  const stem = verb.inf.slice(0, -2);
+  return stem + ENDINGS[tense][type][i];
+}
+
+/* =============== STATE =============== */
+let activeTenses = ["present"];
+let pool = "regular";
+let useVosotros = false;
+let current = null;
+let session = { total: 0, correct: 0, streak: 0, best: 0 };
+
+const allTime  = JSON.parse(localStorage.getItem("conjStats") || '{"total":0,"correct":0}');
+const verbStats = JSON.parse(localStorage.getItem("verbStats") || "{}");
+
+const REG_VERBS = REGULARS.map(([inf, en]) => ({ inf, en }));
+
+/* =============== UI SETUP =============== */
+const tenseOpts = document.getElementById("tense-opts");
+TENSES.forEach(t => {
+  const c = document.createElement("div");
+  c.className = "chip" + (activeTenses.includes(t.id) ? " on" : "");
+  c.textContent = t.label;
+  c.onclick = () => {
+    if (activeTenses.includes(t.id)) {
+      if (activeTenses.length === 1) return; // keep at least one
+      activeTenses = activeTenses.filter(x => x !== t.id);
+      c.classList.remove("on");
+    } else {
+      activeTenses.push(t.id);
+      c.classList.add("on");
+    }
+    document.getElementById("subj-tip").style.display = activeTenses.includes("subjunctive") ? "" : "none";
+    next();
+  };
+  tenseOpts.appendChild(c);
+});
+
+document.querySelectorAll("#pool-opts .chip").forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll("#pool-opts .chip").forEach(x => x.classList.remove("on"));
+    c.classList.add("on");
+    pool = c.dataset.pool;
+    next();
+  };
+});
+
+document.getElementById("vosotros-chip").onclick = function () {
+  useVosotros = !useVosotros;
+  this.classList.toggle("on", useVosotros);
+};
+
+const input = document.getElementById("answer");
+input.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+
+function ins(ch) {
+  const s = input.selectionStart;
+  input.value = input.value.slice(0, s) + ch + input.value.slice(input.selectionEnd);
+  input.focus();
+  input.setSelectionRange(s + 1, s + 1);
+}
+
+/* =============== DRILL LOGIC =============== */
+function worstVerbs() {
+  return Object.entries(verbStats)
+    .filter(([, v]) => v.m >= 2)
+    .sort((a, b) => (b[1].m / b[1].a) - (a[1].m / a[1].a))
+    .slice(0, 5)
+    .map(([inf]) => inf);
+}
+
+function getPool() {
+  if (pool === "regular")   return REG_VERBS;
+  if (pool === "irregular") return IRREGULARS;
+  if (pool === "worst") {
+    const w = worstVerbs();
+    const all = REG_VERBS.concat(IRREGULARS);
+    const list = all.filter(v => w.includes(v.inf));
+    return list.length ? list : all; // fall back if no trouble verbs yet
+  }
+  return REG_VERBS.concat(IRREGULARS);
+}
+
+function next() {
+  const verbs = getPool();
+  const verb = verbs[Math.floor(Math.random() * verbs.length)];
+  const tense = activeTenses[Math.floor(Math.random() * activeTenses.length)];
+  let pi;
+  do { pi = Math.floor(Math.random() * 6); } while (pi === 4 && !useVosotros);
+
+  current = { verb, tense, pi, answer: conjugate(verb, tense, pi) };
+
+  document.getElementById("tense-tag").textContent = TENSES.find(t => t.id === tense).label;
+  document.getElementById("verb").textContent = verb.inf;
+  document.getElementById("verb-en").textContent = verb.en;
+  document.getElementById("pronoun").textContent = PRONOUNS[pi];
+  document.getElementById("feedback").innerHTML = "";
+  input.value = "";
+  input.className = "";
+  input.focus();
+}
+
+function strip(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+
+function check() {
+  if (!current || !input.value.trim()) return;
+  const given = input.value.trim().toLowerCase();
+  const right = current.answer;
+  const exact = given === right;
+  const almostRight = !exact && strip(given) === strip(right);
+
+  session.total++;
+  allTime.total++;
+
+  const vs = verbStats[current.verb.inf] || { a: 0, m: 0 };
+  vs.a++;
+
+  const fb = document.getElementById("feedback");
+  const phrase = PRONOUNS[current.pi] + " " + right;
+
+  if (exact || almostRight) {
+    session.correct++;
+    session.streak++;
+    session.best = Math.max(session.best, session.streak);
+    allTime.correct++;
+    input.className = "good";
+    fb.innerHTML =
+      '<div class="ok">¡Correcto! ✓</div>' +
+      (almostRight ? '<div class="almost">casi — watch the accent: <b>' + right + "</b></div>" : "") +
+      '<div class="aloud">🗣️ Now say it out loud: “' + phrase + '”</div>';
+    setTimeout(next, almostRight ? 2200 : 1400);
+  } else {
+    session.streak = 0;
+    vs.m++;
+    input.className = "bad";
+    fb.innerHTML =
+      '<div class="no">Not quite ✗</div>' +
+      '<div class="answer">' + phrase + "</div>" +
+      '<div class="aloud">🗣️ Say the correct phrase out loud 3 times</div>';
+    setTimeout(next, 3200);
+  }
+
+  verbStats[current.verb.inf] = vs;
+  localStorage.setItem("verbStats", JSON.stringify(verbStats));
+  localStorage.setItem("conjStats", JSON.stringify(allTime));
+  current = null; // block double-checking while feedback shows
+  updateStats();
+}
+
+function skip() { next(); }
+
+function updateStats() {
+  document.getElementById("s-correct").textContent = session.correct;
+  document.getElementById("s-total").textContent = session.total;
+  document.getElementById("s-streak").textContent = session.streak;
+  document.getElementById("s-best").textContent = session.best;
+  document.getElementById("all-correct").textContent = allTime.correct;
+  document.getElementById("all-total").textContent = allTime.total;
+
+  const w = Object.entries(verbStats)
+    .filter(([, v]) => v.m >= 2)
+    .sort((a, b) => (b[1].m / b[1].a) - (a[1].m / a[1].a))
+    .slice(0, 5);
+  const list = document.getElementById("worst-list");
+  if (w.length) {
+    list.innerHTML = w.map(([inf, v]) =>
+      '<div class="worst-item"><b>' + inf + "</b> <span>" + v.m + " misses / " + v.a + " tries</span></div>"
+    ).join("");
+  }
+}
+
+updateStats();
+next();
+</script>
+</body>
+</html>

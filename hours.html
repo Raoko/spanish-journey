@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hours Tracker — Mi Camino Español</title>
+<style>
+  :root {
+    --bg: #16121c;
+    --bg-soft: #1f1a29;
+    --card: #251f31;
+    --border: #3a3050;
+    --text: #f2edf7;
+    --text-dim: #a99fc0;
+    --accent: #ff6b4a;
+    --accent-2: #ffc247;
+    --accent-3: #7c6cff;
+    --green: #4ade80;
+    --red: #f87171;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255, 107, 74, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(124, 108, 255, 0.10), transparent);
+    background-attachment: fixed;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; animation: fadeDown 0.5s ease both; }
+  .back { color: var(--text-dim); text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
+  .back:hover { color: var(--accent-2); }
+
+  h1 {
+    text-align: center;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 800;
+    margin: 8px 0 6px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: fadeUp 0.5s ease both;
+  }
+  .subtitle { text-align: center; color: var(--text-dim); font-size: 0.95rem; margin-bottom: 28px; animation: fadeUp 0.5s 0.05s ease both; }
+  .subtitle b { color: var(--accent-2); }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 18px;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  .panel h2 { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
+  .panel h2 .note { text-transform: none; letter-spacing: 0; }
+
+  /* ---------- Big numbers ---------- */
+  .bignums { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .bignum { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center; }
+  .bignum .n { font-size: 1.9rem; font-weight: 800; }
+  .bignum .n small { font-size: 0.9rem; color: var(--text-dim); font-weight: 500; }
+  .bignum .l { font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; }
+  .bignum.input .n { color: var(--accent-2); }
+  .bignum.speak .n { color: var(--green); }
+
+  /* ---------- Log form ---------- */
+  .type-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text-dim);
+    border-radius: 999px;
+    padding: 7px 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--accent-2); }
+  .chip.on { background: rgba(255, 107, 74, 0.16); border-color: var(--accent); color: var(--text); font-weight: 600; }
+
+  .log-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .log-row input {
+    background: var(--bg-soft);
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-size: 1rem;
+    padding: 10px 14px;
+    border-radius: 12px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .log-row input:focus { border-color: var(--accent-3); }
+  .log-row input[type="number"] { width: 110px; }
+  .log-row input[type="date"] { color-scheme: dark; }
+
+  .quick { display: flex; gap: 6px; }
+  .quick button {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--accent-2);
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .quick button:hover { border-color: var(--accent-2); transform: translateY(-2px); }
+
+  .btn {
+    background: linear-gradient(120deg, var(--accent), #ff8a3d);
+    color: #fff;
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 11px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255, 107, 74, 0.3); }
+
+  .saved-flash { color: var(--green); font-size: 0.9rem; margin-left: 6px; opacity: 0; transition: opacity 0.3s; }
+  .saved-flash.show { opacity: 1; }
+
+  /* ---------- Today / week ---------- */
+  .goalbar { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 999px; height: 14px; overflow: hidden; margin-top: 8px; }
+  .goalbar .fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 999px; transition: width 0.6s ease; }
+  .goalbar .fill.done { background: linear-gradient(90deg, var(--green), #86efac); }
+  .goal-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-dim); margin-top: 6px; }
+  .goal-label b { color: var(--text); }
+
+  /* ---------- Milestones ---------- */
+  .next-up {
+    background: rgba(124, 108, 255, 0.08);
+    border: 1px solid rgba(124, 108, 255, 0.3);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .next-up b { color: var(--accent-3); }
+
+  .milestone { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .milestone:last-child { border-bottom: none; }
+  .m-check { font-size: 1.2rem; width: 28px; text-align: center; flex-shrink: 0; }
+  .m-body { flex: 1; min-width: 0; }
+  .m-title { font-weight: 700; font-size: 0.95rem; }
+  .m-title small { color: var(--text-dim); font-weight: 500; }
+  .m-desc { font-size: 0.82rem; color: var(--text-dim); margin-top: 2px; }
+  .m-bar { background: var(--bg-soft); border-radius: 999px; height: 8px; margin-top: 7px; overflow: hidden; }
+  .m-bar .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent-3), var(--accent)); transition: width 0.6s ease; }
+  .milestone.hit .m-title { color: var(--green); }
+  .milestone.hit .m-bar .fill { background: var(--green); }
+
+  .speak-unlock {
+    margin-top: 14px;
+    text-align: center;
+    padding: 14px;
+    border-radius: 14px;
+    font-weight: 700;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    color: var(--green);
+    display: none;
+  }
+
+  /* ---------- Heatmap ---------- */
+  .heatmap-scroll { overflow-x: auto; padding-bottom: 6px; }
+  .heatmap { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 15px); gap: 4px; width: max-content; }
+  .cell { width: 15px; height: 15px; border-radius: 4px; background: var(--bg-soft); border: 1px solid rgba(58, 48, 80, 0.6); }
+  .cell.l1 { background: #4a2e26; border-color: #5a3a2e; }
+  .cell.l2 { background: #8a4530; border-color: transparent; }
+  .cell.l3 { background: #d05f3a; border-color: transparent; }
+  .cell.l4 { background: #ff8a3d; border-color: transparent; box-shadow: 0 0 8px rgba(255, 138, 61, 0.5); }
+  .cell.future { opacity: 0.25; }
+  .legend { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-dim); margin-top: 10px; }
+  .legend .cell { display: inline-block; }
+
+  /* ---------- Entries ---------- */
+  .entry { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .entry:last-child { border-bottom: none; }
+  .entry .e-icon { width: 26px; text-align: center; }
+  .entry .e-date { color: var(--text-dim); width: 96px; flex-shrink: 0; font-size: 0.82rem; }
+  .entry .e-mins { font-weight: 700; color: var(--accent-2); width: 70px; }
+  .entry .e-type { flex: 1; color: var(--text-dim); }
+  .entry button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 3px 10px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.15s;
+  }
+  .entry button:hover { border-color: var(--red); color: var(--red); }
+  .no-entries { color: var(--text-dim); font-size: 0.9rem; }
+
+  .tip {
+    background: rgba(255, 194, 71, 0.07);
+    border: 1px solid rgba(255, 194, 71, 0.25);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  .tip b { color: var(--accent-2); }
+
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <a class="back" href="index.html">← Inicio</a>
+    <div style="font-size:0.85rem;color:var(--text-dim);">"The hours don't budge, and they don't lie."</div>
+  </header>
+
+  <h1>⏱️ Input Hours Tracker</h1>
+  <p class="subtitle">Fluency is a budget of hours. <b>~600</b> = start speaking · <b>~1,000</b> = words flow · <b>~1,200</b> = B2</p>
+
+  <!-- Totals -->
+  <div class="panel">
+    <div class="bignums">
+      <div class="bignum input"><div class="n" id="total-input">0<small> hrs</small></div><div class="l">Input hours (listening + reading + study)</div></div>
+      <div class="bignum speak"><div class="n" id="total-speak">0<small> hrs</small></div><div class="l">Speaking hours (separate budget!)</div></div>
+      <div class="bignum"><div class="n" id="streak-20">0<small> days</small></div><div class="l">Streak of 20+ min days</div></div>
+      <div class="bignum"><div class="n" id="week-days">0<small> / 6</small></div><div class="l">Days hit this week (goal: 6)</div></div>
+    </div>
+  </div>
+
+  <!-- Log time -->
+  <div class="panel">
+    <h2>➕ Log practice time</h2>
+    <div class="type-chips" id="type-chips">
+      <div class="chip on" data-type="listening">🎧 Listening / watching</div>
+      <div class="chip" data-type="reading">📖 Reading</div>
+      <div class="chip" data-type="study">✏️ Study / Anki / drills</div>
+      <div class="chip" data-type="speaking">🗣️ Speaking / writing</div>
+    </div>
+    <div class="log-row">
+      <input type="number" id="mins" min="1" max="720" placeholder="minutes">
+      <div class="quick">
+        <button onclick="setMins(15)">15m</button>
+        <button onclick="setMins(30)">30m</button>
+        <button onclick="setMins(60)">1h</button>
+        <button onclick="setMins(120)">2h</button>
+      </div>
+      <input type="date" id="date">
+      <button class="btn" onclick="addEntry()">Log it</button>
+      <span class="saved-flash" id="saved">✓ saved</span>
+    </div>
+  </div>
+
+  <!-- Today's goal -->
+  <div class="panel">
+    <h2>🎯 Today <span class="note">— 20 min keeps the streak, 30 min is the goal</span></h2>
+    <div class="goalbar"><div class="fill" id="today-fill" style="width:0%"></div></div>
+    <div class="goal-label"><span><b id="today-mins">0</b> min today</span><span>goal: 30 min</span></div>
+  </div>
+
+  <!-- Milestones -->
+  <div class="panel">
+    <h2>🏁 Roadmap milestones <span class="note">(input hours)</span></h2>
+    <div class="next-up" id="next-up"></div>
+    <div id="milestones"></div>
+    <div class="speak-unlock" id="speak-unlock">🎤 600 hours reached — time to START SPEAKING. Don't wait like the 1,450-hour regret posts!</div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="panel">
+    <h2>📅 Consistency <span class="note">— last 26 weeks, 20-30 min every day beats weekend marathons</span></h2>
+    <div class="heatmap-scroll"><div class="heatmap" id="heatmap"></div></div>
+    <div class="legend">
+      less
+      <span class="cell"></span><span class="cell l1"></span><span class="cell l2"></span><span class="cell l3"></span><span class="cell l4"></span>
+      more &nbsp;·&nbsp; 🔸 = 1-19 min · orange = 20-44 · bright = 45-89 · glowing = 90+
+    </div>
+  </div>
+
+  <!-- Recent entries -->
+  <div class="panel">
+    <h2>🧾 Recent entries</h2>
+    <div id="entries"><div class="no-entries">Nothing logged yet — add your first session above.</div></div>
+  </div>
+
+  <div class="tip">
+    💡 <b>How to count hours:</b> comprehensible input you mostly understand counts; background noise doesn't. Podcasts on the commute, Dreaming Spanish, shows with Spanish subs — log it all. Speaking gets its own budget because output lags input by design (one Redditor: 2,500 hrs input + 427 hrs speaking = talked with 100+ natives, no problems).
+  </div>
+
+</div>
+
+<script>
+/* =============== DATA =============== */
+const TYPES = {
+  listening: { icon: "🎧", label: "Listening / watching" },
+  reading:   { icon: "📖", label: "Reading" },
+  study:     { icon: "✏️", label: "Study / Anki / drills" },
+  speaking:  { icon: "🗣️", label: "Speaking / writing" },
+};
+const INPUT_TYPES = ["listening", "reading", "study"];
+
+const MILESTONES = [
+  { hrs: 300,  title: "Early comprehension",      desc: "Pronunciation perks start arriving passively." },
+  { hrs: 600,  title: "🎤 Start speaking + reading", desc: "The biggest Reddit regret was waiting past here. Book a tutor, talk to yourself, start reading." },
+  { hrs: 1000, title: "Words start to flow",       desc: "\"Words and sentences just started to flow.\" Understanding news around here." },
+  { hrs: 1200, title: "≈ B2 — conversational",     desc: "The community-consensus hour count for conversational fluency." },
+  { hrs: 1500, title: "Strong listening",          desc: "End of the Dreaming Spanish roadmap. Output still needs its own reps." },
+  { hrs: 2500, title: "Comfortable speaking",      desc: "2,000-3,000 hrs input + real speaking hours = talking with natives, no problems." },
+];
+
+let log = JSON.parse(localStorage.getItem("hoursLog") || "[]");
+let selType = "listening";
+
+/* =============== HELPERS =============== */
+function dstr(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+const today = dstr(new Date());
+
+function minutesByDay() {
+  const map = {};
+  log.forEach(e => { map[e.d] = (map[e.d] || 0) + e.m; });
+  return map;
+}
+
+function totalMins(types) {
+  return log.filter(e => types.includes(e.t)).reduce((s, e) => s + e.m, 0);
+}
+
+/* =============== UI SETUP =============== */
+document.getElementById("date").value = today;
+
+document.querySelectorAll("#type-chips .chip").forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll("#type-chips .chip").forEach(x => x.classList.remove("on"));
+    c.classList.add("on");
+    selType = c.dataset.type;
+  };
+});
+
+function setMins(m) { document.getElementById("mins").value = m; }
+
+function addEntry() {
+  const m = parseInt(document.getElementById("mins").value, 10);
+  const d = document.getElementById("date").value;
+  if (!m || m < 1 || !d) return;
+  log.push({ d, m, t: selType });
+  save();
+  document.getElementById("mins").value = "";
+  const flash = document.getElementById("saved");
+  flash.classList.add("show");
+  setTimeout(() => flash.classList.remove("show"), 1500);
+  render();
+}
+
+function removeEntry(i) {
+  log.splice(i, 1);
+  save();
+  render();
+}
+
+function save() {
+  localStorage.setItem("hoursLog", JSON.stringify(log));
+  // feed the homepage stats row
+  const stats = JSON.parse(localStorage.getItem("stats") || '{"words":0,"tests":0,"games":0,"minutes":0}');
+  stats.minutes = log.reduce((s, e) => s + e.m, 0);
+  localStorage.setItem("stats", JSON.stringify(stats));
+}
+
+/* =============== RENDER =============== */
+function render() {
+  const byDay = minutesByDay();
+  const inputMins = totalMins(INPUT_TYPES);
+  const speakMins = totalMins(["speaking"]);
+  const inputHrs = inputMins / 60;
+
+  document.getElementById("total-input").innerHTML = (Math.round(inputHrs * 10) / 10) + "<small> hrs</small>";
+  document.getElementById("total-speak").innerHTML = (Math.round(speakMins / 6) / 10) + "<small> hrs</small>";
+
+  // streak of days with >= 20 min
+  let streak = 0;
+  const cursor = new Date();
+  if ((byDay[today] || 0) < 20) cursor.setDate(cursor.getDate() - 1); // today not hit yet — count back from yesterday
+  while ((byDay[dstr(cursor)] || 0) >= 20) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  document.getElementById("streak-20").innerHTML = streak + "<small> days</small>";
+
+  // days hit this week (Mon-Sun)
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  let hit = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    if ((byDay[dstr(d)] || 0) >= 20) hit++;
+  }
+  document.getElementById("week-days").innerHTML = hit + "<small> / 6</small>";
+
+  // today's goal bar
+  const tm = byDay[today] || 0;
+  const fill = document.getElementById("today-fill");
+  fill.style.width = Math.min(100, (tm / 30) * 100) + "%";
+  fill.className = "fill" + (tm >= 30 ? " done" : "");
+  document.getElementById("today-mins").textContent = tm;
+
+  // milestones
+  const next = MILESTONES.find(ms => inputHrs < ms.hrs);
+  const nextUp = document.getElementById("next-up");
+  if (next) {
+    const remain = next.hrs - inputHrs;
+    const daysAt30 = Math.ceil((remain * 60) / 30);
+    nextUp.innerHTML = "Next up: <b>" + next.title + "</b> at " + next.hrs + " hrs — <b>" +
+      (Math.round(remain * 10) / 10) + " hrs to go</b> (≈ " + daysAt30 + " days at 30 min/day, fewer if you binge input).";
+  } else {
+    nextUp.innerHTML = "<b>Roadmap complete.</b> You're in native-content territory — keep stacking hours and speaking.";
+  }
+
+  document.getElementById("milestones").innerHTML = MILESTONES.map(ms => {
+    const done = inputHrs >= ms.hrs;
+    const pct = Math.min(100, (inputHrs / ms.hrs) * 100);
+    return '<div class="milestone' + (done ? " hit" : "") + '">' +
+      '<div class="m-check">' + (done ? "✅" : "⬜") + "</div>" +
+      '<div class="m-body">' +
+        '<div class="m-title">' + ms.hrs + " hrs — " + ms.title +
+          ' <small>(' + Math.floor(pct) + "%)</small></div>" +
+        '<div class="m-desc">' + ms.desc + "</div>" +
+        '<div class="m-bar"><div class="fill" style="width:' + pct + '%"></div></div>' +
+      "</div></div>";
+  }).join("");
+
+  document.getElementById("speak-unlock").style.display = inputHrs >= 600 ? "block" : "none";
+
+  // heatmap — 26 weeks ending this week
+  const hm = document.getElementById("heatmap");
+  const end = new Date();
+  end.setDate(end.getDate() + (6 - ((end.getDay() + 6) % 7))); // this week's Sunday
+  const start = new Date(end);
+  start.setDate(end.getDate() - (26 * 7 - 1));
+  let cells = "";
+  const cur = new Date(start);
+  while (cur <= end) {
+    const ds = dstr(cur);
+    const m = byDay[ds] || 0;
+    let lvl = "";
+    if (m >= 90) lvl = " l4";
+    else if (m >= 45) lvl = " l3";
+    else if (m >= 20) lvl = " l2";
+    else if (m >= 1) lvl = " l1";
+    const future = ds > today ? " future" : "";
+    cells += '<div class="cell' + lvl + future + '" title="' + ds + ": " + m + ' min"></div>';
+    cur.setDate(cur.getDate() + 1);
+  }
+  hm.innerHTML = cells;
+
+  // recent entries (last 12, newest first)
+  const entriesEl = document.getElementById("entries");
+  if (!log.length) {
+    entriesEl.innerHTML = '<div class="no-entries">Nothing logged yet — add your first session above.</div>';
+  } else {
+    const indexed = log.map((e, i) => ({ ...e, i }));
+    indexed.sort((a, b) => b.d.localeCompare(a.d) || b.i - a.i);
+    entriesEl.innerHTML = indexed.slice(0, 12).map(e =>
+      '<div class="entry">' +
+        '<span class="e-icon">' + TYPES[e.t].icon + "</span>" +
+        '<span class="e-date">' + e.d + "</span>" +
+        '<span class="e-mins">' + e.m + " min</span>" +
+        '<span class="e-type">' + TYPES[e.t].label + "</span>" +
+        '<button onclick="removeEntry(' + e.i + ')">✕</button>' +
+      "</div>"
+    ).join("");
+  }
+}
+
+render();
+</script>
+</body>
+</html>
