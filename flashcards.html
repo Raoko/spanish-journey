@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards — Mi Camino Español</title>
+<style>
+  :root {
+    --bg: #16121c;
+    --bg-soft: #1f1a29;
+    --card: #251f31;
+    --border: #3a3050;
+    --text: #f2edf7;
+    --text-dim: #a99fc0;
+    --accent: #ff6b4a;
+    --accent-2: #ffc247;
+    --accent-3: #7c6cff;
+    --green: #4ade80;
+    --red: #f87171;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255, 107, 74, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(124, 108, 255, 0.10), transparent);
+    background-attachment: fixed;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; animation: fadeDown 0.5s ease both; }
+  .back { color: var(--text-dim); text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
+  .back:hover { color: var(--accent-2); }
+
+  h1 {
+    text-align: center;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 800;
+    margin: 8px 0 6px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: fadeUp 0.5s ease both;
+  }
+  .subtitle { text-align: center; color: var(--text-dim); font-size: 0.95rem; margin-bottom: 28px; animation: fadeUp 0.5s 0.05s ease both; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 18px;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+
+  /* ---------- Deck picker ---------- */
+  .deck {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    margin-bottom: 14px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .deck:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .deck .d-icon { font-size: 1.9rem; }
+  .deck .d-body { flex: 1; min-width: 0; }
+  .deck h3 { font-size: 1.05rem; }
+  .deck p { font-size: 0.83rem; color: var(--text-dim); margin-top: 3px; line-height: 1.45; }
+  .deck .d-counts { font-size: 0.78rem; margin-top: 7px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .deck .d-counts .due { color: var(--red); font-weight: 700; }
+  .deck .d-counts .new { color: var(--accent-3); font-weight: 700; }
+  .deck .d-counts .seen { color: var(--text-dim); }
+
+  .btn {
+    background: linear-gradient(120deg, var(--accent), #ff8a3d);
+    color: #fff;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 11px 22px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255, 107, 74, 0.3); }
+  .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-weight: 500; }
+  .btn.ghost:hover { border-color: var(--accent-2); color: var(--accent-2); box-shadow: none; }
+
+  .new-setting { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-dim); }
+  .new-setting input {
+    width: 70px;
+    background: var(--bg-soft);
+    border: 2px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+  }
+
+  /* ---------- Study ---------- */
+  #study { display: none; }
+
+  .study-top { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 14px; }
+  .study-top .counts span { margin-left: 12px; }
+  .study-top .c-due { color: var(--red); font-weight: 700; }
+  .study-top .c-new { color: var(--accent-3); font-weight: 700; }
+  .study-top .c-done { color: var(--green); font-weight: 700; }
+
+  .flash {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 28px;
+    text-align: center;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .f-tag {
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-3);
+    border: 1px solid rgba(124, 108, 255, 0.4);
+    background: rgba(124, 108, 255, 0.1);
+    padding: 4px 13px;
+    border-radius: 999px;
+  }
+
+  .f-context { color: var(--text-dim); font-size: 1rem; font-style: italic; }
+  .f-main { font-size: 1.7rem; font-weight: 800; line-height: 1.35; }
+  .f-main .blank { color: var(--accent); }
+  .f-main .pron { color: var(--accent-2); }
+  .f-hint { color: var(--text-dim); font-size: 0.95rem; }
+  .f-answer { font-size: 2rem; font-weight: 800; color: var(--green); animation: pop 0.3s ease; }
+  .f-note { font-size: 0.83rem; color: var(--text-dim); line-height: 1.55; max-width: 520px; }
+  .f-img { max-width: min(260px, 70vw); max-height: 200px; border-radius: 12px; border: 1px solid var(--border); }
+
+  .audio-btn {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--accent-2);
+    font-size: 1.3rem;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .audio-btn:hover { border-color: var(--accent-2); transform: scale(1.1); }
+
+  .controls { margin-top: 18px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .grade {
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 13px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s;
+    color: #fff;
+  }
+  .grade:hover { transform: translateY(-2px); }
+  .grade small { display: block; font-weight: 500; font-size: 0.7rem; opacity: 0.85; margin-top: 2px; }
+  .g-again { background: linear-gradient(120deg, #dc4444, var(--red)); }
+  .g-good  { background: linear-gradient(120deg, var(--accent), #ff8a3d); }
+  .g-easy  { background: linear-gradient(120deg, #2eb864, var(--green)); }
+
+  .kbd-hint { text-align: center; font-size: 0.75rem; color: var(--text-dim); margin-top: 12px; }
+  .kbd-hint kbd { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 5px; padding: 1px 7px; font-family: inherit; }
+
+  .done-box { text-align: center; padding: 50px 20px; }
+  .done-box .big { font-size: 2.6rem; }
+  .done-box h2 { margin: 12px 0 8px; }
+  .done-box p { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 20px; }
+
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { 0% { transform: scale(0.85); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <a class="back" href="index.html" id="back-link">← Inicio</a>
+    <div class="new-setting">new cards/day
+      <input type="number" id="new-per-day" min="0" max="200" value="20">
+    </div>
+  </header>
+
+  <h1>🃏 Flashcards</h1>
+  <p class="subtitle">Anki-style spaced repetition — your decks, in the browser. Progress saves automatically.</p>
+
+  <!-- Deck picker -->
+  <div id="picker"></div>
+
+  <!-- Study view -->
+  <div id="study">
+    <div class="study-top">
+      <span id="deck-name"></span>
+      <span class="counts">
+        <span class="c-due" id="c-due"></span>
+        <span class="c-new" id="c-new"></span>
+        <span class="c-done" id="c-done"></span>
+      </span>
+    </div>
+    <div class="flash" id="flash"></div>
+    <div class="controls" id="controls"></div>
+    <div class="kbd-hint"><kbd>space</kbd> show answer · <kbd>1</kbd> again · <kbd>2</kbd> good · <kbd>3</kbd> easy</div>
+  </div>
+
+</div>
+
+<script src="decks/phrasal.js"></script>
+<script src="decks/kofi.js"></script>
+<script src="decks/top1000.js"></script>
+<script>
+/* =============== SRS (SM-2 lite) =============== */
+// state per card: [dueDay, intervalDays, ease(x100), reps]
+const DAY = 864e5;
+const todayN = Math.floor(Date.now() / DAY);
+
+const DECK_META = {
+  top1000: { icon: "📚" },
+  kofi:    { icon: "🔄" },
+  phrasal: { icon: "💬" },
+};
+
+let states = JSON.parse(localStorage.getItem("fcState") || "{}");
+let newLog = JSON.parse(localStorage.getItem("fcNew") || "{}");
+let newPerDay = parseInt(localStorage.getItem("fcNewPerDay") || "20", 10);
+document.getElementById("new-per-day").value = newPerDay;
+document.getElementById("new-per-day").onchange = function () {
+  newPerDay = Math.max(0, parseInt(this.value, 10) || 0);
+  localStorage.setItem("fcNewPerDay", newPerDay);
+  renderPicker();
+};
+
+function deckState(k) { return states[k] = states[k] || {}; }
+function newToday(k) {
+  const e = newLog[k];
+  return (e && e.d === todayN) ? e.n : 0;
+}
+function bumpNew(k) {
+  newLog[k] = { d: todayN, n: newToday(k) + 1 };
+  localStorage.setItem("fcNew", JSON.stringify(newLog));
+}
+function saveStates() {
+  localStorage.setItem("fcState", JSON.stringify(states));
+  // homepage stat: words = top1000 cards started
+  const stats = JSON.parse(localStorage.getItem("stats") || '{"words":0,"tests":0,"games":0,"minutes":0}');
+  stats.words = Object.keys(states.top1000 || {}).length;
+  localStorage.setItem("stats", JSON.stringify(stats));
+}
+
+function dueCount(k) {
+  const st = deckState(k);
+  return Object.values(st).filter(s => s[0] <= todayN).length;
+}
+function newRemaining(k) {
+  const st = deckState(k);
+  const unseen = window.SJ_DECKS[k].cards.length - Object.keys(st).length;
+  return Math.min(unseen, Math.max(0, newPerDay - newToday(k)));
+}
+
+/* =============== DECK PICKER =============== */
+function renderPicker() {
+  const picker = document.getElementById("picker");
+  picker.innerHTML = "";
+  ["top1000", "kofi", "phrasal"].forEach(k => {
+    const d = window.SJ_DECKS[k];
+    const st = deckState(k);
+    const due = dueCount(k), nw = newRemaining(k), seen = Object.keys(st).length;
+    const el = document.createElement("div");
+    el.className = "deck panel";
+    el.innerHTML =
+      '<div class="d-icon">' + DECK_META[k].icon + "</div>" +
+      '<div class="d-body"><h3>' + d.name + "</h3><p>" + d.desc + "</p>" +
+      '<div class="d-counts">' +
+        '<span class="due">' + due + " due</span>" +
+        '<span class="new">' + nw + " new</span>" +
+        '<span class="seen">' + seen + " / " + d.cards.length + " started</span>" +
+      "</div></div>";
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = "Study";
+    btn.onclick = () => startSession(k);
+    el.appendChild(btn);
+    picker.appendChild(el);
+  });
+}
+
+/* =============== SESSION =============== */
+let sess = null;
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startSession(k) {
+  const st = deckState(k);
+  const cards = window.SJ_DECKS[k].cards;
+  const due = shuffle(Object.keys(st).filter(id => st[id][0] <= todayN));
+  const fresh = [];
+  const wantNew = newRemaining(k);
+  for (let i = 0; i < cards.length && fresh.length < wantNew; i++) {
+    if (!st["i" + i]) fresh.push("i" + i);
+  }
+  sess = { k, queue: due.concat(fresh), done: 0, revealed: false };
+  if (!sess.queue.length) { sess.finishedEmpty = true; }
+  document.getElementById("picker").style.display = "none";
+  document.getElementById("study").style.display = "block";
+  document.getElementById("deck-name").textContent = window.SJ_DECKS[k].name;
+  document.getElementById("back-link").textContent = "← Decks";
+  document.getElementById("back-link").href = "#";
+  document.getElementById("back-link").onclick = e => { e.preventDefault(); endSession(); };
+  showCard();
+}
+
+function endSession() {
+  sess = null;
+  document.getElementById("study").style.display = "none";
+  document.getElementById("picker").style.display = "block";
+  const bl = document.getElementById("back-link");
+  bl.textContent = "← Inicio";
+  bl.href = "index.html";
+  bl.onclick = null;
+  renderPicker();
+}
+
+function updateCounts() {
+  const st = deckState(sess.k);
+  const remainingDue = sess.queue.filter(id => st[id]).length;
+  const remainingNew = sess.queue.length - remainingDue;
+  document.getElementById("c-due").textContent = remainingDue + " due";
+  document.getElementById("c-new").textContent = remainingNew + " new";
+  document.getElementById("c-done").textContent = sess.done + " done";
+}
+
+let audioEl = null;
+function playAudio(file) {
+  if (audioEl) audioEl.pause();
+  audioEl = new Audio("decks/media/" + file);
+  audioEl.play().catch(() => {});
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function cardFront(k, c) {
+  if (k === "top1000") {
+    return '<div class="f-tag">¿Qué significa?</div>' +
+      '<div class="f-main">' + esc(c.f) + "</div>" +
+      (c.s ? '<button class="audio-btn" onclick="playAudio(\'' + c.s + '\')">🔊</button>' : "");
+  }
+  if (k === "kofi") {
+    return '<div class="f-tag">Conjuga el verbo</div>' +
+      (c.c ? '<div class="f-context">' + esc(c.c) + "</div>" : "") +
+      '<div class="f-main"><span class="pron">' + esc(c.p) + '</span> <span class="blank">______</span></div>' +
+      '<div class="f-hint">(' + esc(c.v) + ')' + (c.h ? " " + esc(c.h) : "") + "</div>";
+  }
+  return '<div class="f-tag">Tradúcelo al español</div>' +
+    '<div class="f-main">' + esc(c.f) + "</div>";
+}
+
+function cardBack(k, c) {
+  if (k === "top1000") {
+    return '<div class="f-answer">' + esc(c.b) + "</div>" +
+      (c.i ? '<img class="f-img" src="decks/media/' + c.i + '">' : "") +
+      (c.s ? '<button class="audio-btn" onclick="playAudio(\'' + c.s + '\')">🔊</button>' : "");
+  }
+  if (k === "kofi") {
+    return '<div class="f-answer">' + esc(c.p) + " " + esc(c.a) + "</div>" +
+      (c.n ? '<div class="f-note">' + esc(c.n) + "</div>" : "");
+  }
+  return '<div class="f-answer">' + esc(c.b) + "</div>";
+}
+
+function currentCard() {
+  const idx = parseInt(sess.queue[0].slice(1), 10);
+  return window.SJ_DECKS[sess.k].cards[idx];
+}
+
+function showCard() {
+  if (!sess.queue.length) {
+    document.getElementById("flash").innerHTML =
+      '<div class="done-box"><div class="big">🎉</div><h2>' +
+      (sess.finishedEmpty ? "Nothing due right now" : "¡Sesión terminada!") + "</h2><p>" +
+      (sess.finishedEmpty
+        ? "Come back tomorrow, or raise your new-cards-per-day limit."
+        : sess.done + " cards reviewed. Poco a poco se anda lejos.") +
+      "</p></div>";
+    document.getElementById("controls").innerHTML = '<button class="btn" onclick="endSession()">Back to decks</button>';
+    updateCounts();
+    return;
+  }
+  sess.revealed = false;
+  const c = currentCard();
+  document.getElementById("flash").innerHTML = cardFront(sess.k, c);
+  document.getElementById("controls").innerHTML = '<button class="btn" onclick="reveal()">Show answer</button>';
+  if (sess.k === "top1000" && c.s) playAudio(c.s);
+  updateCounts();
+}
+
+function reveal() {
+  if (!sess || sess.revealed || !sess.queue.length) return;
+  sess.revealed = true;
+  const c = currentCard();
+  document.getElementById("flash").innerHTML = cardFront(sess.k, c) + '<div style="opacity:0.35;">—</div>' + cardBack(sess.k, c);
+  document.getElementById("controls").innerHTML =
+    '<button class="grade g-again" onclick="grade(0)">Again<small>&lt; 10 min</small></button>' +
+    '<button class="grade g-good" onclick="grade(1)">Good<small id="g-good-iv"></small></button>' +
+    '<button class="grade g-easy" onclick="grade(2)">Easy<small id="g-easy-iv"></small></button>';
+  const st = deckState(sess.k)[sess.queue[0]];
+  const iv = st ? st[1] : 0;
+  const ease = st ? st[2] / 100 : 2.5;
+  document.getElementById("g-good-iv").textContent = (iv === 0 ? 1 : Math.round(iv * ease)) + "d";
+  document.getElementById("g-easy-iv").textContent = (iv === 0 ? 3 : Math.round(iv * ease * 1.3)) + "d";
+}
+
+function grade(g) {
+  if (!sess || !sess.revealed) return;
+  const id = sess.queue.shift();
+  const st = deckState(sess.k);
+  const isNew = !st[id];
+  let [due, iv, ease, reps] = st[id] || [todayN, 0, 250, 0];
+
+  if (g === 0) {          // again — requeue this session
+    ease = Math.max(130, ease - 20);
+    iv = 0;
+    due = todayN;
+    sess.queue.push(id);
+  } else if (g === 1) {   // good
+    iv = iv === 0 ? 1 : Math.round(iv * ease / 100);
+    due = todayN + iv;
+    reps++;
+    sess.done++;
+  } else {                // easy
+    ease += 15;
+    iv = iv === 0 ? 3 : Math.round(iv * ease / 100 * 1.3);
+    due = todayN + iv;
+    reps++;
+    sess.done++;
+  }
+
+  st[id] = [due, iv, ease, reps];
+  if (isNew) bumpNew(sess.k);
+  saveStates();
+  showCard();
+}
+
+document.addEventListener("keydown", e => {
+  if (!sess) return;
+  if (e.code === "Space") { e.preventDefault(); reveal(); }
+  if (sess.revealed && e.key === "1") grade(0);
+  if (sess.revealed && e.key === "2") grade(1);
+  if (sess.revealed && e.key === "3") grade(2);
+});
+
+renderPicker();
+</script>
+</body>
+</html>
