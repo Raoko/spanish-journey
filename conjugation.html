@@ -224,6 +224,61 @@
   }
   .tip b { color: var(--accent-2); }
 
+  /* ---------- Hack of the day ---------- */
+  .hack {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s 0.08s ease both;
+  }
+  .hack::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-3), var(--accent), var(--accent-2));
+  }
+  .hack .h-label {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .hack .h-tense { font-size: 1.25rem; font-weight: 800; color: var(--accent-2); }
+  .hack .h-tense small { display: block; font-size: 0.85rem; color: var(--text-dim); font-weight: 500; margin-top: 2px; }
+  .hack .h-text { margin-top: 12px; font-size: 0.95rem; line-height: 1.65; color: var(--text); }
+  .hack .h-text b { color: var(--accent); }
+  .hack .h-example {
+    margin-top: 12px;
+    display: inline-block;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--accent-2);
+  }
+  .hack .h-nav { margin-top: 14px; display: flex; gap: 8px; align-items: center; }
+  .hack .h-nav button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .hack .h-nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .hack .h-count { font-size: 0.75rem; color: var(--text-dim); }
+
   details {
     background: var(--card);
     border: 1px solid var(--border);
@@ -264,6 +319,19 @@
 
   <h1>🔄 Conjugation Trainer</h1>
   <p class="subtitle">Random verb → random tense. Type the form, then <b>say the whole phrase out loud</b> — that's what sticks.</p>
+
+  <!-- Hack of the day -->
+  <div class="hack">
+    <div class="h-label">💡 Conjugation hack of the day</div>
+    <div class="h-tense" id="h-tense"></div>
+    <div class="h-text" id="h-text"></div>
+    <div class="h-example" id="h-example"></div>
+    <div class="h-nav">
+      <button onclick="cycleHack(-1)">← prev</button>
+      <button onclick="cycleHack(1)">next hack →</button>
+      <span class="h-count" id="h-count"></span>
+    </div>
+  </div>
 
   <!-- Settings -->
   <div class="panel">
@@ -394,6 +462,121 @@
 </div>
 
 <script>
+/* =============== HACK OF THE DAY =============== */
+const HACKS = [
+  { t:"Present Tense", es:"Presente (de indicativo)",
+    x:"Every single <b>yo</b> form in Spanish ends in <b>-o</b>… except exactly five rebels: <b>soy, estoy, voy, doy, sé</b>. Memorize the \"-oy gang + sé\" and you can never be surprised again.",
+    e:"hablar → hablo · comer → como · vivir → vivo" },
+  { t:"Imperfect Tense", es:"Imperfecto (de indicativo)",
+    x:"The friendliest tense in Spanish: only <b>THREE</b> irregular verbs exist in the whole language — <b>ser (era), ir (iba), ver (veía)</b>. Everything else is perfectly regular. Use it for \"used to\" and background descriptions.",
+    e:"De niño jugaba fútbol todos los días." },
+  { t:"Preterite (Past Tense)", es:"Pretérito (pretérito perfecto simple)",
+    x:"Preterite = <b>photo</b> (a completed snapshot), imperfect = <b>video</b> (rolling background). And the accent IS the meaning: <b>hablo</b> = I speak, <b>habló</b> = he spoke. That little mark is a time machine.",
+    e:"Ayer hablé con mi madre. (photo: done, finished)" },
+  { t:"Future Tense", es:"Futuro",
+    x:"Don't chop anything off — glue endings onto the <b>whole infinitive</b>: é, ás, á, emos, éis, án. Bonus: those endings are literally the verb <b>haber</b> (he, has, ha…) fused onto the verb. Only ~12 irregular stems exist (tendr-, har-, dir-…).",
+    e:"hablar → hablaré · tener → tendré" },
+  { t:"Conditional Tense", es:"Condicional (potencial simple)",
+    x:"Conditional = <b>future's stem + imperfect's -ía endings</b>. It shares the exact same 12 irregular stems as the future, so if you know tendré, you get tendría for free. Meaning: \"would.\"",
+    e:"Me gustaría viajar a España." },
+  { t:"Present Subjunctive", es:"Presente de subjuntivo",
+    x:"The <b>opposite-vowel flip</b>: -ar verbs take e-endings, -er/-ir verbs take a-endings. Build it from the <b>yo form</b>, not the infinitive: tengo → tenga, digo → diga, conozco → conozca.",
+    e:"Espero que tengas un buen día." },
+  { t:"Imperfect Subjunctive", es:"Imperfecto de subjuntivo",
+    x:"The single best hack in Spanish: take the <b>ellos preterite</b>, drop <b>-ron</b>, add <b>-ra</b> endings. hablaron → hablara, fueron → fuera, dijeron → dijera. Works for <b>every verb in the language, zero exceptions</b>.",
+    e:"Si tuviera dinero, viajaría. (tuvieron → tuviera)" },
+  { t:"Future Subjunctive", es:"Futuro de subjuntivo",
+    x:"A museum piece — dead outside legal documents and old proverbs. Same recipe as the imperfect subjunctive but with <b>-re</b>: hablare, fuere. <b>Recognize it, never produce it.</b>",
+    e:"\"Adonde fueres, haz lo que vieres.\" (When in Rome…)" },
+  { t:"Imperative (Commands)", es:"Imperativo",
+    x:"Affirmative tú command = the <b>él/ella form</b> (¡habla!). ALL negative commands = <b>subjunctive</b> (¡no hables!). The 8 irregular tú commands: <b>\"Vin Diesel Has Ten Weapons\"</b> → ven, di, sal, haz, ten, ve, pon, sé.",
+    e:"¡Ven aquí! · ¡No vengas tarde!" },
+  { t:"Participle & Gerund", es:"Participio & Gerundio",
+    x:"Participle: <b>-ado/-ido</b>. Gerund: <b>-ando/-iendo</b>. Learn the irregular participle gang as one chant: <b>hecho, dicho, visto, puesto, escrito, abierto, roto, vuelto, muerto</b>. Gotcha: \"swimming is fun\" uses the infinitive — <i>nadar es divertido</i>, never <i>nadando</i>.",
+    e:"he hecho · está escrito · sigo aprendiendo" },
+  { t:"Compound Tenses — the master key", es:"Tiempos compuestos",
+    x:"Learn <b>haber</b> in 6 flavors (he, había, hube, habré, habría, haya, hubiera) + one participle and you unlock <b>8 tenses at once</b>. Half of all Spanish tenses are just haber + -ado/-ido. Best return on investment in the language.",
+    e:"he comido · había comido · habré comido · haya comido" },
+  { t:"Present Perfect", es:"Perfecto de indicativo",
+    x:"<b>he/has/ha/hemos/habéis/han + participle</b> = \"have done.\" The participle <b>NEVER changes</b> to match gender or number: ella ha comido (never \"comida\"). In Spain this often replaces the preterite for today's events.",
+    e:"¿Has comido hoy? — Sí, he comido dos veces." },
+  { t:"Past Perfect", es:"Pluscuamperfecto (de indicativo)",
+    x:"<b>había + participle</b> = \"had done\" — the past of the past. It's just haber in the (super regular) imperfect, so there's nothing new to learn. Use it for whatever happened <i>before</i> the other past thing.",
+    e:"Ya había comido cuando llegaste." },
+  { t:"Past Anterior", es:"Pretérito anterior",
+    x:"<b>hube + participle</b>. Practically extinct — you'll only meet it in older literature after words like <i>apenas</i> or <i>en cuanto</i>. Modern Spanish uses the pluscuamperfecto or plain preterite instead. <b>Recognize, don't produce.</b>",
+    e:"Apenas hubo terminado, salió." },
+  { t:"Future Perfect", es:"Futuro perfecto",
+    x:"<b>habré + participle</b> = \"will have done\"… but its secret superpower is <b>guessing about the past</b>: \"Habrá salido\" = \"he must have left.\" Natives use it for speculation constantly.",
+    e:"Para junio habré terminado. · ¿Dónde está? — Se habrá dormido." },
+  { t:"Conditional Perfect", es:"Condicional compuesto (potencial compuesto)",
+    x:"<b>habría + participle</b> = \"would have done\" — the <b>regret tense</b>. It almost always shows up holding hands with the pluperfect subjunctive in \"if only\" sentences.",
+    e:"Si hubiera estudiado, habría aprobado." },
+  { t:"Present Perfect Subjunctive", es:"Perfecto de subjuntivo",
+    x:"<b>haya + participle</b> — use it when a WEIRDO trigger points at something already completed. \"Espero que <b>hayas comido</b>\" = I hope you (have) eaten. Just present subjunctive of haber + the usual participle.",
+    e:"Me alegro de que hayas venido." },
+  { t:"Pluperfect Subjunctive", es:"Pluscuamperfecto de subjuntivo",
+    x:"<b>hubiera + participle</b> — star of the unreal past: \"Si <b>hubiera sabido</b>…\" = if I had known. Pair it with the conditional perfect for the full regret combo. (hubiese works too — same meaning, fancier vibe.)",
+    e:"Si hubiera sabido, no habría venido." },
+  { t:"Future Perfect Subjunctive", es:"Futuro perfecto de subjuntivo",
+    x:"<b>hubiere + participle</b> — the rarest tense in Spanish, a legal-document fossil. If you ever spot one in the wild, take a screenshot. Zero reason to learn it beyond bragging rights.",
+    e:"\"Si alguien hubiere incumplido el contrato…\" (contract-speak)" },
+  { t:"Boot Verbs (stem changers)", es:"Verbos con cambio de raíz",
+    x:"e→ie, o→ue, e→i changes only happen <b>inside the boot</b> — yo, tú, él, ellos. <b>Nosotros and vosotros stand outside the boot</b> and keep the original stem: p<b>ie</b>nso pero p<b>e</b>nsamos, d<b>ue</b>rmo pero d<b>o</b>rmimos.",
+    e:"quiero / queremos · puedo / podemos · pido / pedimos" },
+  { t:"-CAR / -GAR / -ZAR", es:"Cambios ortográficos en el pretérito",
+    x:"In the preterite <b>yo</b> form, the spelling changes just to protect the sound: c→<b>qu</b>, g→<b>gu</b>, z→<b>c</b>. It's not irregular — it's Spanish refusing to let you mispronounce it.",
+    e:"buscar → busqué · llegar → llegué · empezar → empecé" },
+  { t:"Yo-Go Verbs", es:"Verbos en -go",
+    x:"A whole gang of verbs sneak a <b>-go</b> into the yo form: ten<b>go</b>, pon<b>go</b>, sal<b>go</b>, di<b>go</b>, ha<b>go</b>, ven<b>go</b>, trai<b>go</b>, oi<b>go</b>. That g then rides through the <b>entire present subjunctive</b>: tenga, ponga, salga, diga…",
+    e:"hago → haga · pongo → ponga · salgo → salga" },
+  { t:"DISHES", es:"Irregulares del subjuntivo",
+    x:"Only six verbs ignore the yo-form rule in the present subjunctive — <b>DISHES</b>: <b>D</b>ar (dé), <b>I</b>r (vaya), <b>S</b>aber (sepa), <b>H</b>aber (haya), <b>E</b>star (esté), <b>S</b>er (sea). Everything else follows the yo form.",
+    e:"Ojalá que sea fácil y que vayamos juntos." },
+  { t:"WEIRDO", es:"¿Cuándo usar el subjuntivo?",
+    x:"The subjunctive triggers: <b>W</b>ishes, <b>E</b>motions, <b>I</b>mpersonal expressions (es importante que…), <b>R</b>ecommendations, <b>D</b>oubt/denial, <b>O</b>jalá. If the main clause does one of these, the que-clause goes subjunctive.",
+    e:"Quiero que vengas. · Dudo que sea verdad. · Ojalá llueva." },
+  { t:"The Sandal Verbs", es:"-ir con cambio en el pretérito",
+    x:"-ir stem changers keep a tiny change in the preterite, but <b>only in the 3rd person</b> (the \"sandal\"): e→i, o→u. The same stem shows up in the gerund. -ar and -er verbs never do this in the preterite.",
+    e:"durmió, durmieron, durmiendo · pidió, pidieron, pidiendo" },
+  { t:"The i→y Rescue", es:"leer, creer, oír, caer…",
+    x:"When an unstressed <b>i</b> gets trapped between two vowels, Spanish swaps it for <b>y</b>: le<b>y</b>ó, cre<b>y</b>eron, o<b>y</b>ó, ca<b>y</b>ó — and in gerunds: le<b>y</b>endo, o<b>y</b>endo. Three vowels in a row is illegal; the y is the rescue.",
+    e:"leer → leyó, leyendo · oír → oyó, oyendo" },
+  { t:"No-Accent Irregulars", es:"Pretéritos irregulares sin tilde",
+    x:"Regular preterites carry accents (habló, comí) — but <b>irregular preterites NEVER do</b>: fui, fue, dio, vio, hizo, pude, puse, tuve, dije. If the stem changed, the accent is gone. Bonus: j-stems drop the i — di<b>jeron</b>, not dijieron.",
+    e:"fue (no accent!) · dio · hizo · dijeron" },
+  { t:"The Cheat Future", es:"ir a + infinitivo",
+    x:"Skip the future tense entirely on day one: <b>voy a + infinitive</b> = \"going to.\" Natives use it constantly in speech — often more than the real future. Conjugate one verb (ir) and you can talk about tomorrow forever.",
+    e:"Voy a estudiar. · Vamos a comer. · Van a llegar tarde." },
+  { t:"The Cheat Past", es:"acabar de + infinitivo",
+    x:"<b>acabo de + infinitive</b> = \"I just did it\" — past meaning with a present-tense conjugation. Pair it with the cheat future and you can time-travel both directions using only the present tense.",
+    e:"Acabo de comer. = I just ate. · Acaban de llegar." },
+  { t:"Usted = the polite shortcut", es:"Usted y el subjuntivo",
+    x:"Usted/ustedes commands are <b>just the subjunctive</b>: hable, coma, venga. And usted always borrows <b>él/ella's verb form</b> everywhere — so you never learn a single extra ending for it. Two grammar topics, zero new memorization.",
+    e:"¡Pase! · ¡Siéntese! · ¿Cómo está (usted)?" },
+];
+
+let hackIndex = (function () {
+  const now = new Date();
+  const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+  return doy % HACKS.length;
+})();
+
+function renderHack() {
+  const h = HACKS[hackIndex];
+  document.getElementById("h-tense").innerHTML = h.t + "<small>" + h.es + "</small>";
+  document.getElementById("h-text").innerHTML = h.x;
+  document.getElementById("h-example").textContent = h.e;
+  document.getElementById("h-count").textContent = (hackIndex + 1) + " / " + HACKS.length;
+}
+
+function cycleHack(d) {
+  hackIndex = (hackIndex + d + HACKS.length) % HACKS.length;
+  renderHack();
+}
+
+renderHack();
+
 /* =============== VERB DATA =============== */
 // Regular verbs (no stem or spelling changes in the drilled tenses)
 const REGULARS = [
