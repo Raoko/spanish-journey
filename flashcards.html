@@ -237,6 +237,8 @@
 <script src="decks/phrasal.js"></script>
 <script src="decks/kofi.js"></script>
 <script src="decks/top1000.js"></script>
+<script src="decks/top5000.js"></script>
+<script src="decks/gender.js"></script>
 <script>
 /* =============== SRS (SM-2 lite) =============== */
 // state per card: [dueDay, intervalDays, ease(x100), reps]
@@ -245,9 +247,12 @@ const todayN = Math.floor(Date.now() / DAY);
 
 const DECK_META = {
   top1000: { icon: "📚" },
+  top5000: { icon: "📖" },
+  gender:  { icon: "⚖️" },
   kofi:    { icon: "🔄" },
   phrasal: { icon: "💬" },
 };
+const DECK_ORDER = ["top1000", "top5000", "gender", "kofi", "phrasal"];
 
 let states = JSON.parse(localStorage.getItem("fcState") || "{}");
 let newLog = JSON.parse(localStorage.getItem("fcNew") || "{}");
@@ -272,7 +277,7 @@ function saveStates() {
   localStorage.setItem("fcState", JSON.stringify(states));
   // homepage stat: words = top1000 cards started
   const stats = JSON.parse(localStorage.getItem("stats") || '{"words":0,"tests":0,"games":0,"minutes":0}');
-  stats.words = Object.keys(states.top1000 || {}).length;
+  stats.words = Object.keys(states.top1000 || {}).length + Object.keys(states.top5000 || {}).length;
   localStorage.setItem("stats", JSON.stringify(stats));
 }
 
@@ -290,7 +295,7 @@ function newRemaining(k) {
 function renderPicker() {
   const picker = document.getElementById("picker");
   picker.innerHTML = "";
-  ["top1000", "kofi", "phrasal"].forEach(k => {
+  DECK_ORDER.forEach(k => {
     const d = window.SJ_DECKS[k];
     const st = deckState(k);
     const due = dueCount(k), nw = newRemaining(k), seen = Object.keys(st).length;
@@ -376,10 +381,15 @@ function esc(s) {
 }
 
 function cardFront(k, c) {
-  if (k === "top1000") {
+  if (k === "top1000" || k === "top5000") {
     return '<div class="f-tag">¿Qué significa?</div>' +
       '<div class="f-main">' + esc(c.f) + "</div>" +
       (c.s ? '<button class="audio-btn" onclick="playAudio(\'' + c.s + '\')">🔊</button>' : "");
+  }
+  if (k === "gender") {
+    return '<div class="f-tag">¿El o La?</div>' +
+      '<div class="f-main">___ ' + esc(c.w) + "</div>" +
+      '<div class="f-hint">' + esc(c.b) + "</div>";
   }
   if (k === "kofi") {
     return '<div class="f-tag">Conjuga el verbo</div>' +
@@ -392,10 +402,15 @@ function cardFront(k, c) {
 }
 
 function cardBack(k, c) {
-  if (k === "top1000") {
+  if (k === "top1000" || k === "top5000") {
     return '<div class="f-answer">' + esc(c.b) + "</div>" +
       (c.i ? '<img class="f-img" src="decks/media/' + c.i + '">' : "") +
       (c.s ? '<button class="audio-btn" onclick="playAudio(\'' + c.s + '\')">🔊</button>' : "");
+  }
+  if (k === "gender") {
+    const art = c.g === "m" ? "el" : "la";
+    return '<div class="f-answer">' + art + " " + esc(c.w) + "</div>" +
+      (c.n ? '<div class="f-note">' + esc(c.n) + "</div>" : "");
   }
   if (k === "kofi") {
     return '<div class="f-answer">' + esc(c.p) + " " + esc(c.a) + "</div>" +
@@ -425,13 +440,34 @@ function showCard() {
   sess.revealed = false;
   const c = currentCard();
   document.getElementById("flash").innerHTML = cardFront(sess.k, c);
-  document.getElementById("controls").innerHTML = '<button class="btn" onclick="reveal()">Show answer</button>';
-  if (sess.k === "top1000" && c.s) playAudio(c.s);
+  if (sess.k === "gender") {
+    document.getElementById("controls").innerHTML =
+      '<button class="grade g-good" style="min-width:110px;" onclick="answerGender(\'m\')">EL<small>masculine</small></button>' +
+      '<button class="grade g-again" style="min-width:110px;background:linear-gradient(120deg,var(--accent-3),#9d8cff);" onclick="answerGender(\'f\')">LA<small>feminine</small></button>';
+  } else {
+    document.getElementById("controls").innerHTML = '<button class="btn" onclick="reveal()">Show answer</button>';
+  }
+  if ((sess.k === "top1000" || sess.k === "top5000") && c.s) playAudio(c.s);
   updateCounts();
 }
 
-function reveal() {
+function answerGender(g) {
   if (!sess || sess.revealed || !sess.queue.length) return;
+  sess.revealed = true;
+  const c = currentCard();
+  const right = g === c.g;
+  document.getElementById("flash").innerHTML =
+    cardFront(sess.k, c) +
+    '<div style="font-weight:800;font-size:1.1rem;color:' + (right ? "var(--green)" : "var(--red)") + ';">' +
+      (right ? "¡Correcto! ✓" : "Not quite ✗") + "</div>" +
+    cardBack(sess.k, c);
+  if (c.s) playAudio(c.s);
+  document.getElementById("controls").innerHTML = "";
+  setTimeout(() => grade(right ? 1 : 0), right ? 1300 : 2800);
+}
+
+function reveal() {
+  if (!sess || sess.revealed || !sess.queue.length || sess.k === "gender") return;
   sess.revealed = true;
   const c = currentCard();
   document.getElementById("flash").innerHTML = cardFront(sess.k, c) + '<div style="opacity:0.35;">—</div>' + cardBack(sess.k, c);
@@ -480,6 +516,11 @@ function grade(g) {
 document.addEventListener("keydown", e => {
   if (!sess) return;
   if (e.code === "Space") { e.preventDefault(); reveal(); }
+  if (sess.k === "gender" && !sess.revealed) {
+    if (e.key === "e") answerGender("m");
+    if (e.key === "l") answerGender("f");
+    return;
+  }
   if (sess.revealed && e.key === "1") grade(0);
   if (sess.revealed && e.key === "2") grade(1);
   if (sess.revealed && e.key === "3") grade(2);

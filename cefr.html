@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEFR Levels — Mi Camino Español</title>
+<style>
+  :root {
+    --bg: #16121c;
+    --bg-soft: #1f1a29;
+    --card: #251f31;
+    --border: #3a3050;
+    --text: #f2edf7;
+    --text-dim: #a99fc0;
+    --accent: #ff6b4a;
+    --accent-2: #ffc247;
+    --accent-3: #7c6cff;
+    --green: #4ade80;
+    --red: #f87171;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255, 107, 74, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(124, 108, 255, 0.10), transparent);
+    background-attachment: fixed;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; animation: fadeDown 0.5s ease both; }
+  .back { color: var(--text-dim); text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
+  .back:hover { color: var(--accent-2); }
+
+  h1 {
+    text-align: center;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 800;
+    margin: 8px 0 6px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: fadeUp 0.5s ease both;
+  }
+  .subtitle { text-align: center; color: var(--text-dim); font-size: 0.95rem; margin-bottom: 28px; animation: fadeUp 0.5s 0.05s ease both; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  .panel > h2 { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
+  .panel > h2 .note { text-transform: none; letter-spacing: 0; }
+
+  /* ---------- Level chart ---------- */
+  .level {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .level:last-child { border-bottom: none; }
+  .lv-badge {
+    flex-shrink: 0;
+    width: 58px; height: 58px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.15rem;
+    border: 1px solid;
+  }
+  .lv-a { background: rgba(74, 222, 128, 0.1); color: var(--green); border-color: rgba(74, 222, 128, 0.35); }
+  .lv-b { background: rgba(255, 194, 71, 0.1); color: var(--accent-2); border-color: rgba(255, 194, 71, 0.35); }
+  .lv-c { background: rgba(255, 107, 74, 0.12); color: var(--accent); border-color: rgba(255, 107, 74, 0.4); }
+  .lv-body { flex: 1; min-width: 0; }
+  .lv-title { font-weight: 700; font-size: 1.02rem; }
+  .lv-title small { color: var(--text-dim); font-weight: 500; margin-left: 8px; }
+  .lv-hours { font-size: 0.78rem; color: var(--accent-3); font-weight: 700; margin-top: 2px; }
+  .lv-desc { font-size: 0.88rem; color: var(--text-dim); margin-top: 6px; line-height: 1.55; }
+  .lv-you {
+    position: absolute; top: 16px; right: 0;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+    background: rgba(124, 108, 255, 0.15); color: var(--accent-3);
+    border: 1px solid rgba(124, 108, 255, 0.4);
+    padding: 4px 11px; border-radius: 999px;
+  }
+  details.guide { margin-top: 10px; }
+  details.guide summary {
+    cursor: pointer; font-size: 0.82rem; color: var(--accent-2);
+    list-style: none; font-weight: 600;
+  }
+  details.guide summary::before { content: "▸ "; }
+  details.guide[open] summary::before { content: "▾ "; }
+  details.guide ul { margin: 8px 0 0 18px; font-size: 0.84rem; color: var(--text-dim); line-height: 1.7; }
+  details.guide a { color: var(--accent-2); }
+
+  /* ---------- Self assessment ---------- */
+  .skill-block { margin-bottom: 22px; }
+  .skill-name { font-weight: 700; font-size: 0.98rem; margin-bottom: 10px; color: var(--accent-2); }
+  label.cando {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 9px 12px; border-radius: 12px;
+    font-size: 0.86rem; color: var(--text-dim); line-height: 1.5;
+    cursor: pointer; transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+  label.cando:hover { background: var(--bg-soft); }
+  label.cando input { margin-top: 3px; accent-color: var(--accent); flex-shrink: 0; }
+  label.cando .lv-chip {
+    flex-shrink: 0; font-size: 0.7rem; font-weight: 800; width: 30px; text-align: center;
+    padding: 2px 0; border-radius: 6px; margin-top: 1px;
+  }
+  label.cando.checked { color: var(--text); border-color: var(--border); background: var(--bg-soft); }
+
+  .btn {
+    background: linear-gradient(120deg, var(--accent), #ff8a3d);
+    color: #fff; border: none; font-size: 1rem; font-weight: 700;
+    padding: 12px 26px; border-radius: 12px; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s; font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255, 107, 74, 0.3); }
+
+  /* ---------- Results ---------- */
+  #result { display: none; }
+  .big-level {
+    text-align: center; font-size: 3rem; font-weight: 800;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .big-sub { text-align: center; color: var(--text-dim); font-size: 0.9rem; margin-top: 4px; }
+  .profile { margin-top: 20px; }
+  .p-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .p-label { width: 150px; font-size: 0.82rem; color: var(--text-dim); flex-shrink: 0; }
+  .p-bar { flex: 1; background: var(--bg-soft); border-radius: 999px; height: 16px; overflow: hidden; }
+  .p-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent-3), var(--accent), var(--accent-2)); transition: width 0.7s ease; }
+  .p-lv { width: 34px; font-weight: 800; font-size: 0.9rem; text-align: right; }
+
+  .hours-note {
+    margin-top: 18px; padding: 14px 18px; border-radius: 14px; font-size: 0.88rem; line-height: 1.6;
+    background: rgba(124, 108, 255, 0.08); border: 1px solid rgba(124, 108, 255, 0.3); color: var(--text-dim);
+  }
+  .hours-note b { color: var(--accent-3); }
+
+  /* ---------- Test links ---------- */
+  .test-link {
+    display: flex; align-items: center; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text);
+    transition: color 0.15s;
+  }
+  .test-link:last-child { border-bottom: none; }
+  .test-link:hover .t-name { color: var(--accent-2); }
+  .test-link .t-name { font-weight: 700; font-size: 0.92rem; flex-shrink: 0; }
+  .test-link .t-desc { font-size: 0.8rem; color: var(--text-dim); }
+
+  .tip {
+    background: rgba(255, 194, 71, 0.07); border: 1px solid rgba(255, 194, 71, 0.25);
+    border-radius: var(--radius); padding: 16px 20px; font-size: 0.9rem; line-height: 1.6;
+    color: var(--text-dim); margin-bottom: 18px;
+  }
+  .tip b { color: var(--accent-2); }
+
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <a class="back" href="index.html">← Inicio</a>
+    <div style="font-size:0.85rem;color:var(--text-dim);" id="last-assessed"></div>
+  </header>
+
+  <h1>🎯 CEFR Levels</h1>
+  <p class="subtitle">Where you are, where you're going, and how to honestly test yourself along the way.</p>
+
+  <!-- The chart -->
+  <div class="panel">
+    <h2>🗺️ The map — A1 to C2 <span class="note">(hours = comprehensible input, community estimates)</span></h2>
+    <div id="chart"></div>
+  </div>
+
+  <div class="tip">
+    💡 <b>How to test yourself (what the research says):</b> online quizzes mostly measure <b>reading and grammar</b> — they can't hear you speak or read your writing. The most trusted self-check is the Council of Europe's official <b>self-assessment grid</b> below: honest "can-do" statements across all five skills. Do it every 2–3 months, cross-check with a free online placement test, and if you ever want it official, sit the <b>DELE</b> or <b>SIELE</b> exam.
+  </div>
+
+  <!-- Self assessment -->
+  <div class="panel">
+    <h2>✅ Self-assessment — check everything you can honestly do <span class="note">(based on the official CEFR grid)</span></h2>
+    <div id="grid"></div>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="btn" onclick="assess()">Estimate my level</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="panel" id="result">
+    <h2>📊 Your profile</h2>
+    <div class="big-level" id="overall"></div>
+    <div class="big-sub" id="overall-sub"></div>
+    <div class="profile" id="profile"></div>
+    <div class="hours-note" id="hours-note"></div>
+  </div>
+
+  <!-- External tests -->
+  <div class="panel">
+    <h2>🧪 Free placement tests <span class="note">(cross-check your self-assessment)</span></h2>
+    <a class="test-link" href="https://spanish.kwiziq.com/test" target="_blank">
+      <span class="t-name">Kwiziq Spanish Test</span>
+      <span class="t-desc">adaptive grammar test, very granular A0–C1 placement — community favorite</span>
+    </a>
+    <a class="test-link" href="https://www.cervantes.to/test_inicial.html" target="_blank">
+      <span class="t-name">Cervantes Escuela</span>
+      <span class="t-desc">53 questions, A1–C1, instant results with answer review</span>
+    </a>
+    <a class="test-link" href="https://www.ef.com/wwen/test/spanish/" target="_blank">
+      <span class="t-name">EF Spanish Test</span>
+      <span class="t-desc">quick reading + listening check</span>
+    </a>
+    <a class="test-link" href="https://www.lengalia.com/en/placement-test.html" target="_blank">
+      <span class="t-name">Lengalia Placement</span>
+      <span class="t-desc">A1–C2 placement test, free, no signup</span>
+    </a>
+    <a class="test-link" href="https://examenes.cervantes.es/es/dele/que-es" target="_blank">
+      <span class="t-name">DELE (official)</span>
+      <span class="t-desc">Instituto Cervantes diploma — the real, internationally recognized certificate</span>
+    </a>
+    <a class="test-link" href="https://siele.org/" target="_blank">
+      <span class="t-name">SIELE (official)</span>
+      <span class="t-desc">online official certification, scored 0–1000 mapped to CEFR, faster than DELE</span>
+    </a>
+  </div>
+
+</div>
+
+<script>
+/* =============== LEVEL CHART DATA =============== */
+const LEVELS = [
+  { id:"A1", cls:"lv-a", name:"Breakthrough", hours:"≈ 90–150 hrs", desc:"Survival basics: introduce yourself, order food, understand slow clear speech about familiar things.",
+    guide:["Do Language Transfer (free audio) start to finish.","Start the Top 1000 deck — 5–20 new words/day.","Drill Presente (regulars) in the Conjugation Trainer.","Log 30 min every day in the Hours Tracker — the habit IS the level."] },
+  { id:"A2", cls:"lv-a", name:"Waystage", hours:"≈ 180–300 hrs", desc:"Everyday routine: shopping, family, simple past events, short social exchanges.",
+    guide:["Binge superbeginner/beginner comprehensible input (Dreaming Spanish).","Add Pretérito + Imperfecto to your conjugation drills.","Start the El o La gender drill.","Keep stacking the Top 1000 — finish it."] },
+  { id:"B1", cls:"lv-b", name:"Threshold", hours:"≈ 350–600 hrs", desc:"Conversational survival: handle travel, tell stories, express opinions on familiar topics. This is where the famous plateau lives.",
+    guide:["Push input to 1–2 hrs/day — intermediate CI, easy podcasts.","🎤 Start speaking at ~600 hrs: talk to yourself, book a tutor.","Start the KOFI conjugation deck and the subjunctive.","Graduated reading: children's books → simple novels."] },
+  { id:"B2", cls:"lv-b", name:"Vantage — \"fluent\"", hours:"≈ 1,000–1,200 hrs", desc:"The community's fluency bar: spontaneous conversation with natives, follow TV and films in standard dialect, argue a viewpoint.",
+    guide:["Break the plateau: BAN your B1 vocab, start the Top 5000 deck.","Native content with Spanish subs; drop learner content.","Tutor or exchange partner 2×/week — output needs its own budget.","Write a short daily journal in Spanish."] },
+  { id:"C1", cls:"lv-c", name:"Advanced", hours:"≈ 1,800–2,500 hrs", desc:"Effortless comprehension, flexible expression for work and study, humor and nuance mostly land.",
+    guide:["Only native content — series, novels, podcasts at natural speed.","Go deep on narrow domains (your job, your hobbies) then widen.","Slang + dialect training: music with lyrics, street interviews.","Stack real speaking hours — aim for 100+ conversation hours."] },
+  { id:"C2", cls:"lv-c", name:"Mastery", hours:"3,000+ hrs & years of use", desc:"Near-native: understand virtually everything, effortless precision, idioms and cultural references included.",
+    guide:["Live chunks of your life in Spanish: friendships, work, media diet.","Read literature; write and get corrected.","Multiple dialects until none of them surprise you."] },
+];
+
+/* =============== SELF-ASSESSMENT GRID (paraphrased from the official CoE grid) =============== */
+const SKILLS = [
+  { name:"🎧 Listening", key:"li", items:[
+    "I recognize familiar words and very basic phrases about myself and my family when people speak slowly and clearly.",
+    "I understand common everyday phrases (shopping, family, work) and catch the main point of short, clear messages.",
+    "I understand the main points of clear standard speech on familiar topics, and the gist of slow, clear radio/TV on current affairs.",
+    "I understand extended speech and lectures, most TV news, and films in standard dialect.",
+    "I understand extended speech even when it's not clearly structured, and films/TV without much effort.",
+    "I understand any kind of spoken language, live or broadcast, even at fast native speed, once I'm used to the accent." ] },
+  { name:"📖 Reading", key:"re", items:[
+    "I understand familiar names, words, and very simple sentences on notices and posters.",
+    "I can read short simple texts — ads, menus, timetables — and short personal messages.",
+    "I understand texts written in everyday language and descriptions of events and feelings in personal letters.",
+    "I can read articles and reports on current issues and contemporary literary prose.",
+    "I understand long, complex factual and literary texts and specialized articles outside my field.",
+    "I read virtually all forms of written language with ease, including abstract or linguistically complex texts." ] },
+  { name:"🗣️ Spoken interaction", key:"si", items:[
+    "I can interact simply if the other person repeats slowly and helps me formulate what I'm trying to say.",
+    "I handle short social exchanges and simple routine tasks, but usually can't keep a conversation going myself.",
+    "I can enter unprepared into conversations on familiar topics (family, hobbies, travel, daily life) and handle most situations while traveling.",
+    "I interact fluently and spontaneously enough to have regular conversation with native speakers and take an active part in discussions.",
+    "I express myself fluently without much obvious searching for words, socially and professionally.",
+    "I take part effortlessly in any conversation, idioms and colloquialisms included, and rephrase around difficulties so smoothly people barely notice." ] },
+  { name:"🎤 Spoken production", key:"sp", items:[
+    "I can use simple phrases to describe where I live and people I know.",
+    "I can describe my family, other people, my living conditions, and my job in a series of simple phrases.",
+    "I can connect phrases to describe experiences, events, dreams, and hopes, briefly give reasons, and tell a story.",
+    "I can give clear, detailed descriptions on a wide range of subjects and explain a viewpoint with pros and cons.",
+    "I can describe complex subjects in detail, weaving in sub-themes and finishing with an appropriate conclusion.",
+    "I can present a clear, smooth description or argument in a style that fits the context, with a logical structure." ] },
+  { name:"✍️ Writing", key:"wr", items:[
+    "I can write a short, simple postcard and fill in forms with personal details.",
+    "I can write short simple notes and messages, and a very simple personal letter (e.g. thanking someone).",
+    "I can write simple connected text on familiar topics and personal letters describing experiences and impressions.",
+    "I can write clear, detailed text on many subjects and an essay or report giving reasons for or against a view.",
+    "I can express myself in clear, well-structured text, expanding points of view at some length — letters, essays, reports.",
+    "I can write clear, smooth text in an appropriate style — complex letters, reports, or articles with effective logical structure." ] },
+];
+const LEVEL_IDS = ["A1","A2","B1","B2","C1","C2"];
+const LEVEL_CLS = ["lv-a","lv-a","lv-b","lv-b","lv-c","lv-c"];
+
+/* =============== RENDER CHART =============== */
+const hoursLog = JSON.parse(localStorage.getItem("hoursLog") || "[]");
+const inputHrs = hoursLog.filter(e => e.t !== "speaking").reduce((s, e) => s + e.m, 0) / 60;
+function hoursLevel(h) {
+  if (h >= 2500) return "C1"; if (h >= 1000) return "B2"; if (h >= 350) return "B1";
+  if (h >= 180) return "A2"; if (h >= 90) return "A1"; return null;
+}
+const hrsLv = hoursLevel(inputHrs);
+
+document.getElementById("chart").innerHTML = LEVELS.map(l =>
+  '<div class="level">' +
+    '<div class="lv-badge ' + l.cls + '">' + l.id + "</div>" +
+    '<div class="lv-body">' +
+      '<div class="lv-title">' + l.name + (hrsLv === l.id ? '<span class="lv-you">📍 your hours put you here</span>' : "") + "</div>" +
+      '<div class="lv-hours">' + l.hours + "</div>" +
+      '<div class="lv-desc">' + l.desc + "</div>" +
+      '<details class="guide"><summary>How to get here</summary><ul>' +
+        l.guide.map(g => "<li>" + g + "</li>").join("") +
+      "</ul></details>" +
+    "</div></div>"
+).join("");
+
+/* =============== RENDER GRID =============== */
+const saved = JSON.parse(localStorage.getItem("cefrSelf") || "{}");
+const checks = saved.checks || {};
+
+document.getElementById("grid").innerHTML = SKILLS.map(s =>
+  '<div class="skill-block"><div class="skill-name">' + s.name + "</div>" +
+  s.items.map((txt, i) => {
+    const id = s.key + i;
+    const on = checks[id] ? " checked" : "";
+    return '<label class="cando' + (checks[id] ? " checked" : "") + '" data-id="' + id + '">' +
+      '<input type="checkbox"' + on + ">" +
+      '<span class="lv-chip ' + LEVEL_CLS[i] + '">' + LEVEL_IDS[i] + "</span>" +
+      "<span>" + txt + "</span></label>";
+  }).join("") + "</div>"
+).join("");
+
+document.querySelectorAll("label.cando input").forEach(inp => {
+  inp.onchange = function () {
+    const lbl = this.closest("label");
+    checks[lbl.dataset.id] = this.checked;
+    lbl.classList.toggle("checked", this.checked);
+  };
+});
+
+if (saved.date) document.getElementById("last-assessed").textContent = "last assessed: " + saved.date;
+
+/* =============== SCORING =============== */
+function skillLevel(s) {
+  // highest level whose statement AND all lower ones are checked
+  let lv = -1;
+  for (let i = 0; i < 6; i++) {
+    if (checks[s.key + i]) lv = i;
+    else break;
+  }
+  return lv; // -1 = below A1
+}
+
+function assess() {
+  const date = new Date().toISOString().slice(0, 10);
+  localStorage.setItem("cefrSelf", JSON.stringify({ checks, date }));
+  document.getElementById("last-assessed").textContent = "last assessed: " + date;
+
+  const perSkill = SKILLS.map(s => ({ name: s.name, lv: skillLevel(s) }));
+  const sorted = perSkill.map(p => p.lv).sort((a, b) => a - b);
+  const median = sorted[2]; // middle of 5
+  const overall = median < 0 ? "pre-A1" : LEVEL_IDS[median];
+
+  document.getElementById("overall").textContent = overall;
+  document.getElementById("overall-sub").textContent =
+    median < 0 ? "Just getting started — every expert was here once." :
+    "median of your five skills — your profile below shows the real shape";
+
+  document.getElementById("profile").innerHTML = perSkill.map(p =>
+    '<div class="p-row"><div class="p-label">' + p.name + "</div>" +
+    '<div class="p-bar"><div class="p-fill" style="width:' + ((p.lv + 1) / 6 * 100) + '%"></div></div>' +
+    '<div class="p-lv">' + (p.lv < 0 ? "—" : LEVEL_IDS[p.lv]) + "</div></div>"
+  ).join("");
+
+  const hn = document.getElementById("hours-note");
+  if (inputHrs > 0) {
+    hn.innerHTML = "⏱️ Your logged input: <b>" + (Math.round(inputHrs * 10) / 10) + " hrs</b>" +
+      (hrsLv ? " — hour-wise that's <b>" + hrsLv + "</b> territory. " : ". ") +
+      "If your self-assessment is lower than your hours suggest, that's normal (output lags input). If it's higher… be honest with the checkboxes. 😄";
+  } else {
+    hn.innerHTML = "⏱️ No hours logged yet — start the <b><a href='hours.html' style='color:var(--accent-3)'>Hours Tracker</a></b> and this box will compare your hours against your self-assessment.";
+  }
+
+  document.getElementById("result").style.display = "block";
+  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
